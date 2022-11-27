@@ -1,0 +1,22 @@
+# Definition of SNAP+ZBL potential.
+variable zblcutinner equal 4
+variable zblcutouter equal 4.8
+variable zblz1 equal 74
+variable zblz2 equal 4
+
+# Specify hybrid with SNAP and ZBL
+
+pair_style hybrid/overlay zbl ${zblcutinner} ${zblcutouter} snap
+pair_coeff 1 1 zbl ${zblz1} ${zblz1}
+pair_coeff 1 2 zbl ${zblz1} ${zblz2}
+pair_coeff 2 2 zbl ${zblz2} ${zblz2}
+pair_coeff * * snap potentials/WBe_pot_${propagator}.snapcoeff potentials/WBe_pot_${propagator}.snapparam W Be
+
+# Run MD
+
+#velocity all create 300.0 4928459 loop geom
+fix 1 all nve
+fix 2 all langevin v_Tcorrected ${temp} ${tdamp} ${seed} #langevin thermostat
+fix 3 all recenter INIT INIT INIT
+
+

@@ -1,0 +1,76 @@
+# script to check the vacancy moving (or not) with SNAP W-Be potential (only W)
+
+# Initialize simulation
+
+variable seed equal 3590153
+variable nsteps index 50
+variable nrep equal 4
+variable a equal 3.1803 #O: this is the scale for lattice, it depends on units command
+variable temp equal 2000.0                # temperature of initial sample #
+units           metal
+
+# generate the box and atom positions using a BCC lattice
+
+variable nx equal ${nrep}
+variable ny equal ${nrep}
+variable nz equal ${nrep}
+
+boundary        p p p
+
+lattice         bcc $a
+region          box block 0 ${nx} 0 ${ny} 0 ${nz}
+create_box      2 box
+create_atoms    1 box #O: we have 2 different types of atoms and here we use only the first one
+mass 1 183.84
+mass 2 9.012182
+
+set     group all type/fraction 2 0.00 ${seed} # Change 5% of W to He (O: typo. rather to Be) 
+group   tungsten         type 1
+group   beryllium        type 2
+# choose potential
+
+###
+# Dump configurations
+###
+dump dum1 all custom 10 dump_output.dat id type xs ys zs ix iy iz 
+
+#include WBe_Wood_PRB2019.snap
+
+# Setup output
+
+thermo          10
+thermo_modify norm yes #O: scaling of norms with number of atoms
+compute ttemp all temp
+
+# Set up NVE run
+
+timestep 0.5e-3
+neighbor 1.0 bin
+neigh_modify once no every 1 delay 0 check yes
+
+# Run MD
+
+#velocity all create 2000.0 4928459 loop geom
+#fix 1 all nve
+#fix 2 all langevin ${temp} ${temp} ${tdamp} ${seed} #langevin thermostat
+#fix 3 all recenter INIT INIT INIT
+
+# To store original configuration
+
+#run             1
+
+# To remove 1 atom
+
+#create_atoms 1 single 0 1.59015 0 # units box
+#min_style cg
+#minimize 1e-15 1e-15 5000 5000
+
+#variable        i loop ${nsteps}
+#    run 10
+#    write_restart restart.run
+#    min_style 
+#    cgminimize 1e-2 1e-2 500 500
+#    read_restart restart.run
+#next             i
+
+#run             ${nsteps}
